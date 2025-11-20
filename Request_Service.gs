@@ -16,6 +16,9 @@ function onFormSubmit(e) {
     
     if (!richiesteSheet) {
       log('Errore: foglio Richieste non trovato', null);
+      logEvent('ERROR', 'onFormSubmit: Foglio Richieste non trovato', {
+        noteTecniche: 'Il foglio Richieste non esiste nel documento'
+      });
       return;
     }
     
@@ -41,9 +44,27 @@ function onFormSubmit(e) {
       data = new Date(data);
     }
     
+    // Log arrivo richiesta
+    logEvent('REQUEST_SUBMIT', 'Nuova richiesta ricevuta dal form', {
+      idDip: idDip,
+      nome: nome,
+      sede: sede,
+      tipo: tipo,
+      dataRichiesta: data,
+      noteTecniche: 'Giorni richiesti: ' + giorni
+    });
+    
     // Validazione dati base
     if (!idDip || !nome || !sede || !tipo || !data) {
       setRequestStatus(lastRow, 'REJECTED', 'Dati mancanti nella richiesta', '');
+      logEvent('REQUEST_REJECTED', 'Dati mancanti o non validi', {
+        idDip: idDip,
+        nome: nome,
+        sede: sede,
+        tipo: tipo,
+        dataRichiesta: data,
+        noteTecniche: 'Validazione fallita: campi obbligatori mancanti'
+      });
       return;
     }
     
@@ -63,6 +84,15 @@ function onFormSubmit(e) {
     if (approvedMonthlyForDip >= maxMensili) {
       stato = 'REJECTED';
       motivazione = 'Limite mensile raggiunto (' + approvedMonthlyForDip + '/' + maxMensili + ' richieste)';
+      
+      logEvent('REQUEST_REJECTED', 'Limite mensile superato', {
+        idDip: idDip,
+        nome: nome,
+        sede: sede,
+        tipo: tipo,
+        dataRichiesta: data,
+        noteTecniche: 'Richieste già approvate questo mese: ' + approvedMonthlyForDip + ' / ' + maxMensili
+      });
     }
     // REGOLA 2: Limite giornaliero per sede
     else if (approvedCountForDay >= maxPerGiorno) {
@@ -70,11 +100,29 @@ function onFormSubmit(e) {
       var namesApproved = getNamesApprovedForDate(data, sede);
       motivazione = 'Limite giornaliero raggiunto';
       note = 'Max ' + maxPerGiorno + ' per questo giorno. Già approvati: ' + namesApproved.join(', ');
+      
+      logEvent('REQUEST_REJECTED', 'Limite giornaliero superato per la sede', {
+        idDip: idDip,
+        nome: nome,
+        sede: sede,
+        tipo: tipo,
+        dataRichiesta: data,
+        noteTecniche: 'Assenze già approvate nella sede ' + sede + ': ' + approvedCountForDay + ' / ' + maxPerGiorno + ' - Nomi: ' + namesApproved.join(', ')
+      });
     }
     // APPROVAZIONE AUTOMATICA
     else {
       stato = 'APPROVED';
       motivazione = 'Approvato automaticamente';
+      
+      logEvent('REQUEST_APPROVED', 'Richiesta approvata automaticamente', {
+        idDip: idDip,
+        nome: nome,
+        sede: sede,
+        tipo: tipo,
+        dataRichiesta: data,
+        noteTecniche: 'Giorni: ' + giorni + ' - Limiti rispettati (Mensile: ' + approvedMonthlyForDip + '/' + maxMensili + ', Giornaliero: ' + approvedCountForDay + '/' + maxPerGiorno + ')'
+      });
       
       // Aggiorna il planner
       addToPlanner(idDip, nome, sede, tipo, data, giorni);
@@ -85,6 +133,23 @@ function onFormSubmit(e) {
     
   } catch (error) {
     log('Errore in onFormSubmit', error);
+    
+    logEvent('ERROR', 'Errore critico in onFormSubmit', {
+      noteTecniche: error.message + '\n' + (error.stack || '')
+    });
+    
+    // In caso di errore, imposta lo stato come ERROR
+    try {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var richiesteSheet = ss.getSheetByName('Richieste');
+      var lastRow = richiesteSheet.getLastRow();
+      setRequestStatus(lastRow, 'ERROR', 'Errore durante la validazione', error.message);
+    } catch (e) {
+      log('Errore nel set status ERROR', e);
+      logEvent('ERROR', 'Errore doppio in onFormSubmit catch block', {
+        noteTecniche: e.message
+      });
+    }
   }
 }
 

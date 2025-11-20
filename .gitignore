@@ -1,5 +1,26 @@
+# Sistema operativo
 .DS_Store
 Thumbs.db
-node_modules/
+
+# Editor
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+package-lock.json
+
+# CLASP
 .clasp.json
+
+# Backup e temporanei
+*.bak
+*.tmp
+*.log
+
+# Credentials
+.credentials/
+*.json.enc

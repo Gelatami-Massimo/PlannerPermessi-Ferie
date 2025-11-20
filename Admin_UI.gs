@@ -69,6 +69,16 @@ function forceApproveRequest(rowNumber, reason) {
     var motivazione = reason ? reason : 'Forzata dall\'amministratore';
     setRequestStatus(rowNumber, 'FORCED', motivazione, '');
     
+    // Log forzatura
+    logEvent('FORCED_APPROVE', 'Approvazione forzata da amministratore', {
+      idDip: request.idDip,
+      nome: request.nome,
+      sede: request.sede,
+      tipo: request.tipo,
+      dataRichiesta: data,
+      noteTecniche: 'Riga: ' + rowNumber + ' - Motivo: ' + motivazione
+    });
+    
     // Aggiorna il planner
     addToPlanner(request.idDip, request.nome, request.sede, request.tipo, data, request.giorni);
     
@@ -86,6 +96,11 @@ function forceApproveRequest(rowNumber, reason) {
     
   } catch (error) {
     log('Errore in forceApproveRequest', error);
+    
+    logEvent('ERROR', 'Errore durante forceApproveRequest', {
+      noteTecniche: 'Riga: ' + rowNumber + ' - Errore: ' + error.message + '\n' + (error.stack || '')
+    });
+    
     return {
       success: false,
       message: 'Errore durante la forzatura:\n\n' + error.message

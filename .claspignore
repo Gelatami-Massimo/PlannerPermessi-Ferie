@@ -1,0 +1,11 @@
+# Ignora tutti i file
+*
+
+# Eccetto i file sorgente necessari
+!appsscript.json
+!*.gs
+!*.html
+!*.md
+
+# Ignora file di configurazione locale
+.clasp.json

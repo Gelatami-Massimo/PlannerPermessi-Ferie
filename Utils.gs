@@ -3,6 +3,8 @@
  * UTILS.GS
  * Funzioni di utilità comuni
  * ========================================
+ * Versione: 2.0.0
+ * Ultima modifica: 2025-11-20
  */
 
 /**
@@ -34,7 +36,7 @@ function toStr(v) {
 }
 
 /**
- * Funzione di logging semplice per debug.
+ * Funzione di logging semplice per debug (solo console).
  * @param {string} message - Messaggio da loggare
  * @param {*} data - Dati aggiuntivi (opzionale)
  */
@@ -45,6 +47,73 @@ function log(message, data) {
     Logger.log('[' + timestamp + '] ' + message + ' | Data: ' + JSON.stringify(data));
   } else {
     Logger.log('[' + timestamp + '] ' + message);
+  }
+}
+
+/**
+ * Registra un evento nel foglio Log per audit e debug.
+ * Crea il foglio e le intestazioni se non esistono.
+ * 
+ * @param {string} evento - Tipo di evento (es. REQUEST_SUBMIT, REQUEST_APPROVED, FORCED_APPROVE, ERROR)
+ * @param {string} dettagli - Descrizione breve dell'evento
+ * @param {Object} opt - Parametri opzionali:
+ *   - idDip {string} - ID Dipendente
+ *   - nome {string} - Nome Dipendente
+ *   - sede {string} - Sede
+ *   - tipo {string} - Tipo richiesta (Ferie/Permesso)
+ *   - dataRichiesta {Date|string} - Data della richiesta
+ *   - noteTecniche {string} - Note tecniche (es. stacktrace errori)
+ */
+function logEvent(evento, dettagli, opt) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var logSheet = ss.getSheetByName('Log');
+    
+    // Crea foglio Log se non esiste
+    if (!logSheet) {
+      logSheet = ss.insertSheet('Log');
+    }
+    
+    // Inizializza intestazioni se il foglio è vuoto
+    if (logSheet.getLastRow() === 0) {
+      var headers = [['Timestamp', 'Evento', 'Dettagli', 'ID_Dipendente', 'Nome', 'Sede', 'Tipo', 'Data_Richiesta', 'Note_Tecniche']];
+      logSheet.getRange('A1:I1').setValues(headers);
+      logSheet.getRange('A1:I1').setFontWeight('bold').setBackground('#673ab7').setFontColor('#ffffff');
+      logSheet.setFrozenRows(1);
+      logSheet.autoResizeColumns(1, 9);
+    }
+    
+    // Prepara i dati opzionali
+    opt = opt || {};
+    var idDip = opt.idDip || '';
+    var nome = opt.nome || '';
+    var sede = opt.sede || '';
+    var tipo = opt.tipo || '';
+    var dataRichiesta = opt.dataRichiesta || '';
+    var noteTecniche = opt.noteTecniche || '';
+    
+    // Formatta data richiesta se è un oggetto Date
+    if (dataRichiesta instanceof Date) {
+      dataRichiesta = Utilities.formatDate(dataRichiesta, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+    }
+    
+    // Aggiungi riga al log
+    logSheet.appendRow([
+      new Date(),
+      evento,
+      dettagli,
+      idDip,
+      nome,
+      sede,
+      tipo,
+      dataRichiesta,
+      noteTecniche
+    ]);
+    
+  } catch (error) {
+    // Fallback: se il logging fallisce, usa solo Logger.log
+    Logger.log('ERRORE in logEvent: ' + error.message);
+    Logger.log('Evento: ' + evento + ', Dettagli: ' + dettagli);
   }
 }
 

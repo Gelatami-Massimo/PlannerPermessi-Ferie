@@ -299,6 +299,76 @@ Se hai modificato manualmente delle richieste:
 ### Config
 Configurazione limiti giornalieri e mensili.
 
+| Colonna A | Colonna B |
+|-----------|-----------|
+| Giorno | Max |
+| Lunedi | 2 |
+| ... | ... |
+| MaxRichiesteMensili | 6 |
+
+### Dipendenti
+Anagrafica dipendenti con ID, nome, sede, ruolo ed email.
+
+### Richieste
+Registro di tutte le richieste con stato e motivazione.
+
+**Colonne**: Timestamp | ID_Dipendente | Nome | Sede | Tipo | Data | Giorni | Stato | Motivazione_Admin | Note
+
+**Stati possibili**:
+- `PENDING`: In attesa (non usato, validazione immediata)
+- `APPROVED`: Approvato automaticamente
+- `REJECTED`: Rifiutato per limiti
+- `FORCED`: Approvato forzatamente dall'amministratore
+- `ERROR`: Errore durante la validazione
+
+### Planner-Mensile
+Calendario visuale delle assenze.
+
+- **Riga 1**: Intestazioni con le date
+- **Righe 2+**: Un dipendente per riga
+- **Colonne**: Data (es. 01/11/2025), Nome, Sede, poi una colonna per ogni giorno
+
+**Simboli**:
+- `P` = Permesso (azzurro)
+- `F` = Ferie (giallo)
+
+### Riepilogo
+Statistiche mensili per dipendente (ferie/permessi totali).
+
+### Log
+**Sistema di audit e debug** per tracciare ogni evento critico del sistema.
+
+**Colonne**: Timestamp | Evento | Dettagli | ID_Dipendente | Nome | Sede | Tipo | Data_Richiesta | Note_Tecniche
+
+**Tipi di eventi registrati**:
+- `REQUEST_SUBMIT`: Nuova richiesta ricevuta dal form
+- `REQUEST_APPROVED`: Richiesta approvata automaticamente
+- `REQUEST_REJECTED`: Richiesta rifiutata (limite mensile o giornaliero)
+- `FORCED_APPROVE`: Approvazione forzata da amministratore
+- `SETUP_RUN`: Esecuzione setup iniziale
+- `ERROR`: Errori critici con stacktrace completo
+
+**Utilizzo del Log**:
+- 🔍 **Audit**: verifica chi ha fatto cosa e quando
+- 🐛 **Debug**: analizza errori con stacktrace completi in Note_Tecniche
+- 📊 **Statistiche**: conta richieste per dipendente/sede/tipo
+- 🔐 **Sicurezza**: traccia approvazioni forzate con motivazioni
+
+**Esempio di lettura**:
+```
+Timestamp: 20/11/2025 10:15:30
+Evento: REQUEST_REJECTED
+Dettagli: Limite mensile superato
+ID_Dipendente: D001
+Nome: Mario Rossi
+Sede: Gemma
+Tipo: Ferie
+Data_Richiesta: 25/11/2025
+Note_Tecniche: Richieste già approvate questo mese: 6 / 6
+```
+
+> 💡 **Suggerimento**: Il foglio Log si auto-crea alla prima esecuzione. Consulta questo foglio per risolvere problemi o verificare il comportamento del sistema.
+
 ### Dipendenti
 Anagrafica dipendenti con ID, nome, sede, ruolo, email.
 
